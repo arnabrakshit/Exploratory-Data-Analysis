@@ -1,11 +1,20 @@
-data<- read.table("household_power_consumption.txt", sep=";", header=T, quote= "", strip.white=TRUE, stringsAsFactors = F, na.strings= "?")
+source("downloadArchive.R")
 
-# Subsetting the full data to obtain the data related to two days: 
-data<- subset(data, (data$Date == "1/2/2007" | data$Date== "2/2/2007")) 
+# Load the NEI & SCC data frames.
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
 
-# creating Plot1
-png("plot1.png", width=480, height= 480)
+# Aggregate by sum the total emissions by year
+aggTotals <- aggregate(Emissions ~ year,NEI, sum)
 
-hist(data$Global_active_power, col= "red", xlab= "Global Active Power (kilowatts)", ylab= "Frequency", main= "Global Active Power")
+png("plot1.png",width=480,height=480,units="px",bg="transparent")
+
+barplot(
+  (aggTotals$Emissions)/10^6,
+  names.arg=aggTotals$year,
+  xlab="Year",
+  ylab="PM2.5 Emissions (10^6 Tons)",
+  main="Total PM2.5 Emissions From All US Sources"
+)
 
 dev.off()
