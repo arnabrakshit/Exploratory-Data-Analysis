@@ -1,24 +1,26 @@
-data<- read.table("household_power_consumption.txt", sep=";", header=T, quote= "", strip.white=TRUE, stringsAsFactors = F, na.strings= "?")
+source("downloadArchive.R")
 
-# Subsetting the full data to obtain the data related to two days: 
-data<- subset(data, (data$Date == "1/2/2007" | data$Date== "2/2/2007")) 
-# change the date format
-data$Date <- as.Date(data$Date, format = "%d/%m/%Y")
+# Load the NEI & SCC data frames.
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
 
-data$DateTime <- as.POSIXct(paste(data$Date, data$Time))
+# Subset NEI data by Baltimore's fip.
+baltimoreNEI <- NEI[NEI$fips=="24510",]
 
+# Aggregate using sum the Baltimore emissions data by year
+aggTotalsBaltimore <- aggregate(Emissions ~ year, baltimoreNEI,sum)
 
+png("plot3.png",width=480,height=480,units="px",bg="transparent")
 
-# creating Plot3
+library(ggplot2)
 
-png("plot3.png", width = 480, height = 480)
+ggp <- ggplot(baltimoreNEI,aes(factor(year),Emissions,fill=type)) +
+  geom_bar(stat="identity") +
+  theme_bw() + guides(fill=FALSE)+
+  facet_grid(.~type,scales = "free",space="free") + 
+  labs(x="year", y=expression("Total PM"[2.5]*" Emission (Tons)")) + 
+  labs(title=expression("PM"[2.5]*" Emissions, Baltimore City 1999-2008 by Source Type"))
 
-plot(data$DateTime, data$Sub_metering_1, type="l", ylab= "Energy sub metering", xlab="")
-
-lines(data$DateTime, data$Sub_metering_2, type="l", col="red")
-
-lines(data$DateTime, data$Sub_metering_3, type="l", col="blue")
-
-legend("topright", c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"), lty=1, col=c("black", "red", "blue"))
+print(ggp)
 
 dev.off()
