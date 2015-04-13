@@ -1,17 +1,23 @@
-data<- read.table("household_power_consumption.txt", sep=";", header=T, quote= "", strip.white=TRUE, stringsAsFactors = F, na.strings= "?")
+source("downloadArchive.R")
 
-# Subsetting the full data to obtain the data related to two days: 
-data<- subset(data, (data$Date == "1/2/2007" | data$Date== "2/2/2007")) 
-# change the date format
-data$Date <- as.Date(data$Date, format = "%d/%m/%Y")
+# Load the NEI & SCC data frames.
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
 
-data$DateTime <- as.POSIXct(paste(data$Date, data$Time))
+# Subset NEI data by Baltimore's fip.
+baltimoreNEI <- NEI[NEI$fips=="24510",]
 
+# Aggregate using sum the Baltimore emissions data by year
+aggTotalsBaltimore <- aggregate(Emissions ~ year, baltimoreNEI,sum)
 
+png("plot2.png",width=480,height=480,units="px",bg="transparent")
 
-# creating Plot2
-png("plot2.png", width=480, height= 480)
-
-plot(data$DateTime, data$Global_active_power, type= "l", lwd=1, ylab= "Global Active Power (kilowatts)", xlab="")
+barplot(
+  aggTotalsBaltimore$Emissions,
+  names.arg=aggTotalsBaltimore$year,
+  xlab="Year",
+  ylab="PM2.5 Emissions (Tons)",
+  main="Total PM2.5 Emissions From all Baltimore City Sources"
+)
 
 dev.off()
